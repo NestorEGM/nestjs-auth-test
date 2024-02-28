@@ -15,17 +15,25 @@ export class AuthService {
     async register({ password, email, name }: RegisterDto) {
         const user = await this.usersService.findOneByEmail(email);
 
+        if (!!user?.error) {
+            throw new BadRequestException(user.error);
+        }
+
         if (!!user) {
             throw new BadRequestException('Ya existe este email');
         }
 
         const hashedPassword = await bcryptjs.hash(password, 10);
 
-        await this.usersService.create({
+        const res = await this.usersService.create({
             name,
             email,
             password: hashedPassword,
         });
+
+        if (!!res?.error) {
+            throw new BadRequestException(res.error);
+        }
 
         return {
             message: 'Usuario creado correctamente',
@@ -34,6 +42,10 @@ export class AuthService {
 
     async login({ password, email }: LoginDto) {
         const user = await this.usersService.findOneByEmail(email);
+
+        if (!!user?.error) {
+            throw new BadRequestException(user.error);
+        }
 
         if (!user) {
             throw new UnauthorizedException('Email invalido');
